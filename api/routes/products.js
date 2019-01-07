@@ -5,9 +5,27 @@ const Product = require('../../models/products');
 
 /** get */
 router.get('/', (req, res, next) => {
-    res.status(200).json({
-        message: 'GET Handling router products.'
-    });
+    
+    Product.find()
+        .exec()
+        .then(productList => {
+            if(productList.length >= 0){
+                console.log("data product : "+productList);
+                res.status(200).json(productList);
+            }else{
+                console.log("data not found");
+                res.status(404).json({
+                    message: 'sorry data product not found.'
+                });
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).json({
+                error: error,
+                message: 'upps..server error.'
+            });
+        });
 });
 
 /** post */
@@ -20,11 +38,17 @@ router.post('/', (req, res, next) => {
     });
     product.save().then(result => {
         console.log(result);
+        res.status(201).json({
+            message: 'successfully created product',
+            createdProduct: result
+        });
     })
-    .catch(err => console.log(err));
-    res.status(201).json({
-        message: 'POST Handling router products.',
-        createdProduct: product
+    .catch(err => {
+        console.log(err);
+        res.status(500).json({
+            message: 'FAILED',
+            error: err
+        });
     });
 });
 
@@ -35,22 +59,68 @@ router.get('/:productId', (req, res, next) => {
         .exec()
         .then(result => {
             console.log(result);
-            res.status(200).json(result);
-        })
-        .catch(err => console.log(err));
+
+            if(result){
+                res.status(200).json(result);
+            }else{
+                res.status(404).json({
+                    message: 'sorry id not found.'
+                });
+            }
+
+        }).catch(err => {
+            console.log(err);
+            res.status(500).json({
+                error: err,
+                message: 'FAILED'
+            });
+        });
 });
 
 /**patch */
 router.patch('/:productId', (req, res, next) => {
-   res.status(200).json({
-        message: 'Updated Products.'
-    });
+   const productId = req.params.productId;
+   const updateOps = {};
+
+    for (const ops of req.body){
+        updateOps[ops.propName] = ops.value;
+    }
+
+   Product.update({_id: productId}, {$set : updateOps})
+   .exec()
+   .then(result => {
+       console.log("update data : "+result);
+       res.status(200).json({
+           message: 'success',
+           data: result
+       })
+   })
+   .catch(error => {
+       console.log("ups..server error.")
+       res.status(500).json({
+           message: 'FAILED',
+           error: error
+       })
+   })
+
 });
 
 /** delete */
 router.delete('/:productId', (req, res, nexr) => {
-    res.status(200).json({
-        message: 'Delete Products.'
+    const productId = req.params.productId;
+    Product.remove({_id : productId})
+    .exec()
+    .then(result => {
+        console.log("data successfully delete : "+result);
+        res.status(200).json({
+            message: 'data has been delete.'
+        })
+    })
+    .catch(error => {
+        console.log(error);
+        res.status(500).json({
+            message: 'ups..server error.'
+        })
     });
 });
 
