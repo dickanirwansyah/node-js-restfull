@@ -1,5 +1,7 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
+const Product = require('../../models/products');
 
 /** get */
 router.get('/', (req, res, next) => {
@@ -10,10 +12,16 @@ router.get('/', (req, res, next) => {
 
 /** post */
 router.post('/', (req, res, next) => {
-    const product = {
+
+    const product = new Product({
+        _id: new mongoose.Types.ObjectId,
         name: req.body.name,
-        price: req.body.price,
-    };
+        price: req.body.price
+    });
+    product.save().then(result => {
+        console.log(result);
+    })
+    .catch(err => console.log(err));
     res.status(201).json({
         message: 'POST Handling router products.',
         createdProduct: product
@@ -23,22 +31,13 @@ router.post('/', (req, res, next) => {
 /** get by id */
 router.get('/:productId', (req, res, next) => {
     const id = req.params.productId;
-
-    if(id === 'special'){
-        res.status(200).json({
-            message: 'id is special.',
-            id: id
+    Product.findById(id)
+        .exec()
+        .then(result => {
+            console.log(result);
+            res.status(200).json(result);
         })
-    }else if(id === 'notspecial'){
-        res.status(200).json({
-            message: 'id is not special',
-            id: id
-        })
-    }else{
-        res.status(200).json({
-            message: 'id is not special or notspecial'
-        })
-    }
+        .catch(err => console.log(err));
 });
 
 /**patch */
