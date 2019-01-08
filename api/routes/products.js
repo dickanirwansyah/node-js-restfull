@@ -7,17 +7,25 @@ const Product = require('../../models/products');
 router.get('/', (req, res, next) => {
     
     Product.find()
+        .select('name price _id')
         .exec()
         .then(productList => {
-            if(productList.length >= 0){
-                console.log("data product : "+productList);
-                res.status(200).json(productList);
-            }else{
-                console.log("data not found");
-                res.status(404).json({
-                    message: 'sorry data product not found.'
-                });
+
+            const response = {
+                count: productList.length,
+                products: productList.map(prod => {
+                    return {
+                        name: prod.name,
+                        price: prod.price,
+                        _id: prod._id,
+                        request: {
+                            type: 'GET',
+                            url: 'http://localhost:3000/products/'+prod._id
+                        }
+                    }
+                })
             }
+           res.status(200).json(response)
         })
         .catch(error => {
             console.log(error);
@@ -39,8 +47,15 @@ router.post('/', (req, res, next) => {
     product.save().then(result => {
         console.log(result);
         res.status(201).json({
-            message: 'successfully created product',
-            createdProduct: result
+            message: 'Created Product Successfully',
+            createdProduct: {
+                name: result.name,
+                price: result.price,
+                request: {
+                    type: 'GET',
+                    url: 'http://localhost:3000/products/'+result._id
+                }
+            }
         });
     })
     .catch(err => {
@@ -56,12 +71,17 @@ router.post('/', (req, res, next) => {
 router.get('/:productId', (req, res, next) => {
     const id = req.params.productId;
     Product.findById(id)
+        .select('_id name price')
         .exec()
         .then(result => {
             console.log(result);
 
             if(result){
-                res.status(200).json(result);
+                res.status(200).json({
+                    product: result,
+                    description: 'GET',
+                    url: 'http://localhost:3000/products/'
+                });
             }else{
                 res.status(404).json({
                     message: 'sorry id not found.'
@@ -84,6 +104,12 @@ router.patch('/:productId', (req, res, next) => {
 
     for (const ops of req.body){
         updateOps[ops.propName] = ops.value;
+        /**untuk request di postman --> 
+         * {
+         *   "propName" : "name", "value" : "blabla",
+         *   "propName" : "price", "value" : xxxx
+         * }
+         */
     }
 
    Product.update({_id: productId}, {$set : updateOps})
@@ -91,8 +117,11 @@ router.patch('/:productId', (req, res, next) => {
    .then(result => {
        console.log("update data : "+result);
        res.status(200).json({
-           message: 'success',
-           data: result
+           message: 'Product updated',
+           request : {
+               type: 'GET',
+               url: 'http://localhost:3000/products/' + productId
+           }
        })
    })
    .catch(error => {
