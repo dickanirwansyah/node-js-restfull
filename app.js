@@ -26,7 +26,7 @@ app.use(bodyParser.json());
 
 //router handling
 app.use('/products', productRoutes);
-app.use('/order', orderRoutes);
+app.use('/orders', orderRoutes);
 
 
 //router handling error
