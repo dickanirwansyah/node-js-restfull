@@ -135,14 +135,19 @@ router.patch('/:productId', (req, res, next) => {
 });
 
 /** delete */
-router.delete('/:productId', (req, res, nexr) => {
+router.delete('/:productId', (req, res, next) => {
     const productId = req.params.productId;
     Product.remove({_id : productId})
     .exec()
     .then(result => {
         console.log("data successfully delete : "+result);
         res.status(200).json({
-            message: 'data has been delete.'
+            message: 'Product deleted',
+            request: {
+                type: 'POST',
+                url: 'http://localhost:3000/products',
+                body: {name: 'String', price: 'Number'}
+            }
         })
     })
     .catch(error => {
